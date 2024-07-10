@@ -10,7 +10,7 @@
 
 #include <SPI.h>
 
-const int ledPin = 2;
+const int ledPin = 9;
 bool ledState;
 
 void setup() {

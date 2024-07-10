@@ -17,8 +17,8 @@ Watch [this video](https://youtu.be/0nVNwozXsIc?si=dTtKkJWaDG93pys8) to understa
 
 ### Arduino Nano 
 
-- D2 to a 220 ohm resistor which is connected to the positive end of an LED
+- D9 to a 220 ohm resistor which is connected to the positive end of an LED
 
 ### Arduino Mega
 
-- D47 to a 220 ohm resistor which is connected to the positive end of an LED
+- D22 to a 220 ohm resistor which is connected to the positive end of an LED
