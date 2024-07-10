@@ -20,7 +20,6 @@ int dt = 500; // delay time in ms
 Stepper myStepper(stepsPerRevolution, 18, 16, 17, 15);
 
 void setup() {
-
   // set the speed of the motor
   myStepper.setSpeed(motSpeed);
 }
