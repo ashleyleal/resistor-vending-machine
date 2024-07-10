@@ -10,10 +10,10 @@ Watch [this video](https://youtu.be/0nVNwozXsIc?si=dTtKkJWaDG93pys8) to understa
 
 ### SPI Connections
 
-- Nano D10 to Mega D53
-- Nano D11 to Mega D51
-- Nano D12 to Mega D50
-- Nano D13 to Mega D52
+- Nano D10 to Mega D53 (SS)
+- Nano D11 to Mega D51 (MOSI)
+- Nano D12 to Mega D50 (MISO)
+- Nano D13 to Mega D52 (SCK)
 
 ### Arduino Nano 
 
