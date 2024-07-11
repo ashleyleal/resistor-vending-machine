@@ -91,7 +91,7 @@ void loop() {
 void pushButtonISR() {
   unsigned long currentTime = millis();
 
-  // if the current time is larger than the debounce delay, toggle the LED
+  // if the current time is larger than the debounce delay, update the state to start reeling
   if (currentTime - lastDebounceTime > debounceDelay) {
     lastDebounceTime = currentTime; // update debounce
     if (dispenserState == IDLE) {
