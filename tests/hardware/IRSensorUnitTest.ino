@@ -1,5 +1,5 @@
 int irSensorPin = 4; 
-int ledPin = 13;
+int ledPin = 9;
 
 void setup(){
   pinMode(irSensorPin, INPUT); 
@@ -16,4 +16,5 @@ void loop(){
   else  {
     //else turn on the onboard LED
     digitalWrite(ledPin, HIGH); 
+}
 }
