@@ -4,7 +4,7 @@
  * Date        : 07/11/2024
  * 
  * File Name   : pushButtonISR.ino
- * Purpose     : Push button interrupt service routine (ISR) to toggle an LED
+ * Purpose     : Push button interrupt service routine (ISR) to toggle on-board LED
  * 
  */
 
