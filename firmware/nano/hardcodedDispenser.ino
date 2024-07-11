@@ -35,8 +35,7 @@ Stepper myStepper(stepsPerRevolution, 18, 16, 17, 15);
 
 Servo myServo1;
 Servo myServo2;
-int servo1Pos = 0; 
-int servo2Pos = 180;
+int servoPos = 0;
 
 enum DispenserState {
   IDLE,
@@ -108,7 +107,7 @@ void reeling() {
 
 void counting() {
   int sensorStatus = digitalRead(irSensorPin);
-   if (sensorStatus == HIGH) // read sensor status
+   if (sensorStatus == LOW) // read sensor status (is this active low?)
    {
     resistorCount++;
    }
@@ -122,20 +121,21 @@ void counting() {
 }
 
 void cutting() {
-  // move the servos in opposite directions to cut the resistor
-    while (servo1Pos < 90 && servo2Pos > 90) {
-      myServo1.write(servo1Pos);
-      myServo2.write(servo2Pos);
-      servo1Pos++;
-      servo2Pos--;
+    for(servoPos = 0; servoPos <= 180; servoPos+=1) {
+      myServo1.write(servoPos);
+      myServo2.write(servoPos);
+    }
+    delay(500);
+    for(servoPos = 180; servoPos >= 0; servoPos-=1) {
+      myServo1.write(servoPos);
+      myServo2.write(servoPos);
     }
     dispenserState = COMPLETE;
 }
 
 void complete() {
   // reset the servo positions
-   servo1Pos = 0;
-   servo2Pos = 180;
+  servoPos = 0;
   // reset the resistor count
   resistorCount = 0;
   // reset the dispenser state
