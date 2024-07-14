@@ -10,6 +10,8 @@
 
 #include <Servo.h>
 #include <Stepper.h>
+#include <avr/sleep.h>
+#include <avr/interrupt.h> 
 
 // define pins
 const int buttonPin = 3;
@@ -64,6 +66,9 @@ void setup() {
 
     // calling ISR on negedge of button press
     attachInterrupt(digitalPinToInterrupt(buttonPin), pushButtonISR, FALLING);
+
+    // enable global interrupts
+    sei();
 }
 
 // in the main loop, we will check the state of the dispenser and act accordingly
@@ -76,7 +81,7 @@ The FSM transitions from one state to another based on inputs or events, and it 
 void loop() {
     switch (dispenserState) {
         case IDLE:
-            // do nothing, wait for button press
+            enterSleepMode();
             break;
         case REELING:
             reeling();
@@ -114,9 +119,21 @@ void pushButtonISR() {
     if (currentTime - lastDebounceTime > debounceDelay) {
         lastDebounceTime = currentTime;  // update debounce
         if (dispenserState == IDLE) {
+
+            // toggle the LED
+            ledState = !ledState;
+            digitalWrite(ledPin, ledState);
+
             dispenserState = REELING;
         }
     }
+}
+
+// Function to put the Arduino into sleep mode
+void enterSleepMode() {
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
+  sleep_disable();
 }
 
 // The following functions are used to define the behavior of the dispenser in each state
