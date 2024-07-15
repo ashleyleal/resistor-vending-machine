@@ -11,7 +11,7 @@
 #include <Servo.h>
 #include <Stepper.h>
 #include <avr/sleep.h>
-#include <avr/interrupt.h> 
+#include <avr/interrupt.h>
 
 // define pins
 const int buttonPin = 3;
@@ -53,6 +53,10 @@ enum DispenserState {
 DispenserState dispenserState = IDLE;  // set initial state of the dispenser
 
 void setup() {
+    // initialize serial communication for debugging
+    Serial.begin(9600);
+    Serial.println("Setup started");
+
     // initialize pins
     pinMode(buttonPin, INPUT_PULLUP);  // set the button pin as input with pullup resistor to prevent floating
     pinMode(irSensorPin, INPUT);
@@ -69,6 +73,7 @@ void setup() {
 
     // enable global interrupts
     sei();
+    Serial.println("Setup complete");
 }
 
 // in the main loop, we will check the state of the dispenser and act accordingly
@@ -81,6 +86,8 @@ The FSM transitions from one state to another based on inputs or events, and it 
 void loop() {
     switch (dispenserState) {
         case IDLE:
+            Serial.println("Entering sleep mode");
+            delay(100);
             enterSleepMode();
             break;
         case REELING:
@@ -121,8 +128,9 @@ void pushButtonISR() {
         if (dispenserState == IDLE) {
 
             // toggle the LED
-            ledState = !ledState;
+            ledState = HIGH;
             digitalWrite(ledPin, ledState);
+            Serial.println("Button pressed, waking up");
 
             dispenserState = REELING;
         }
@@ -131,8 +139,12 @@ void pushButtonISR() {
 
 // Function to put the Arduino into sleep mode
 void enterSleepMode() {
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  set_sleep_mode(SLEEP_MODE_PWR_SAVE);
   sleep_enable();
+  // allow wake up from pin change interrupt
+  attachInterrupt(digitalPinToInterrupt(buttonPin), pushButtonISR, FALLING);
+  sleep_mode();
+  // execution goes here after wake up
   sleep_disable();
 }
 
@@ -140,12 +152,14 @@ void enterSleepMode() {
 // They also transition the dispenser to the next state based on the FSM
 
 void reeling() {
+    Serial.println("Reeling state");
     // move the motor enough for one resistor
     myStepper.step(stepsPerRevolution * revolutionsPerResistor);
     dispenserState = COUNTING;
 }
 
 void counting() {
+    Serial.println("Counting state");
     int sensorStatus = digitalRead(irSensorPin);
     if (sensorStatus == LOW)  // read sensor status (is this active low?)
     {
@@ -160,23 +174,29 @@ void counting() {
 }
 
 void cutting() {
+    Serial.println("Cutting state");
     for (servoPos = 0; servoPos <= 180; servoPos += 1) {
         myServo1.write(servoPos);
         myServo2.write(servoPos);
     }
-    delay(500);
+    delay(1250);
     for (servoPos = 180; servoPos >= 0; servoPos -= 1) {
         myServo1.write(servoPos);
         myServo2.write(servoPos);
     }
+    delay(1250);
     dispenserState = COMPLETE;
 }
 
 void complete() {
+    Serial.println("Complete state");
     // reset the servo positions
     servoPos = 0;
     // reset the resistor count
     resistorCount = 0;
+    // toggle the LED
+    ledState = LOW;
+    digitalWrite(ledPin, ledState);
     // reset the dispenser state
     dispenserState = IDLE;
 }
