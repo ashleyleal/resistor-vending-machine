@@ -4,9 +4,9 @@
 // defines pins numbers
 const int stepPin = 15; 
 const int dirPin = 16; 
-const int enablePin = 17;                  // active low 
+const int enablePin = 17;                // active low
 
-const int microstepRes = 32;
+const int microstepRes = 32;             // 1 / 32 microstep resolution
 const int stepsPerRevolution = 200;      // from datasheet: 360 deg / 1.8 deg = 200
 
 int stepsFullRotation = stepsPerRevolution * microstepRes;

@@ -30,11 +30,13 @@ const unsigned long debounceDelay = 250;  // in ms
 volatile unsigned long lastDebounceTime = 0;
 
 // stepper motor configuration
-int stepsPerRevolution = 2048;         // can be found in the motor's datasheet (this is for a 28BYJ-48 motor)
-const int revolutionsPerResistor = 1;  // number of revolutions needed to dispense one resistor (Need to be calibrated)
-int motSpeed = 10;                     // speed in rpm
-// IN1 to A4 (18), IN2 to A3 (17), IN3 to A2 (16), IN4 to A1 (15)
-Stepper myStepper(stepsPerRevolution, 18, 16, 17, 15);
+const int stepPin = 15; 
+const int dirPin = 16; 
+const int enablePin = 17;                // active low
+const int microstepRes = 32;             // 1 / 32 microstep resolution
+const int stepsPerRevolution = 200;      // from datasheet: 360 deg / 1.8 deg = 200
+const int revolutionsPerResistor = 1;    // needs to be calibrated
+int stepsPerResistor = stepsPerRevolution * microstepRes * revolutionsPerResistor;
 
 // servo motor configuration
 Servo myServo1;
@@ -65,8 +67,11 @@ void setup() {
     myServo1.attach(servoPin1);
     myServo2.attach(servoPin2);
 
-    // set the speed of the motor
-    myStepper.setSpeed(motSpeed);
+    // stepper motor pins
+    pinMode(stepPin, OUTPUT); 
+    pinMode(dirPin, OUTPUT);
+    pinMode(enablePin, OUTPUT);
+    digitalWrite(enablePin, HIGH); // stepper driver off to start
 
     // calling ISR on negedge of button press
     attachInterrupt(digitalPinToInterrupt(buttonPin), pushButtonISR, FALLING);
@@ -154,7 +159,18 @@ void enterSleepMode() {
 void reeling() {
     Serial.println("Reeling state");
     // move the motor enough for one resistor
-    myStepper.step(stepsPerRevolution * revolutionsPerResistor);
+    digitalWrite(enablePin, LOW);
+    digitalWrite(dirPin, LOW); // Enables the motor to move forward
+
+    for(int x = 0; x < stepsPerResistor; x++) { // pulse stepper motor
+        digitalWrite(stepPin,HIGH); 
+        delayMicroseconds(500); 
+        digitalWrite(stepPin,LOW); 
+        delayMicroseconds(500); 
+    }
+  
+  delay(1000); // One second delay
+  digitalWrite(enablePin, HIGH); // shutdown stepper driver 
     dispenserState = COUNTING;
 }
 
