@@ -14,11 +14,12 @@
 #include <avr/interrupt.h>
 
 // define pins
+const int irOnPin = 2;
 const int buttonPin = 3;
-const int ledPin = 9;
 const int irSensorPin = 4;
 const int servoPin1 = 5;
 const int servoPin2 = 6;
+const int ledPin = 9;
 
 // initialize variables
 volatile bool ledState = LOW;
@@ -35,12 +36,11 @@ const int dirPin = 16;
 const int enablePin = 17;                // active low
 const int microstepRes = 32;             // 1 / 32 microstep resolution
 const int stepsPerRevolution = 200;      // from datasheet: 360 deg / 1.8 deg = 200
-const int revolutionsPerResistor = 1;    // needs to be calibrated
-int stepsPerResistor = stepsPerRevolution * microstepRes * revolutionsPerResistor;
+int stepsPerResistor = stepsPerRevolution * microstepRes * 0.5;
 
 // servo motor configuration
-Servo myServo1;
-Servo myServo2;
+Servo leftServo;
+Servo rightServo;
 int servoPos = 0;
 
 // define states for the dispenser FSM
@@ -61,11 +61,16 @@ void setup() {
 
     // initialize pins
     pinMode(buttonPin, INPUT_PULLUP);  // set the button pin as input with pullup resistor to prevent floating
-    pinMode(irSensorPin, INPUT);
     pinMode(ledPin, OUTPUT);
+    
+    pinMode(irSensorPin, INPUT);
+    pinMode(irOnPin, OUTPUT);
+    digitalWrite(irOnPin, LOW);
 
-    myServo1.attach(servoPin1);
-    myServo2.attach(servoPin2);
+    leftServo.attach(servoPin1);
+    rightServo.attach(servoPin2);
+    leftServo.write(90);
+    rightServo.write(0);
 
     // stepper motor pins
     pinMode(stepPin, OUTPUT); 
@@ -137,6 +142,7 @@ void pushButtonISR() {
             digitalWrite(ledPin, ledState);
             Serial.println("Button pressed, waking up");
 
+            digitalWrite(irOnPin, HIGH);
             dispenserState = REELING;
         }
     }
@@ -160,7 +166,7 @@ void reeling() {
     Serial.println("Reeling state");
     // move the motor enough for one resistor
     digitalWrite(enablePin, LOW);
-    digitalWrite(dirPin, LOW); // Enables the motor to move forward
+    digitalWrite(dirPin, HIGH); // Enables the motor to move forward
 
     for(int x = 0; x < stepsPerResistor; x++) { // pulse stepper motor
         digitalWrite(stepPin,HIGH); 
@@ -191,16 +197,15 @@ void counting() {
 
 void cutting() {
     Serial.println("Cutting state");
-    for (servoPos = 0; servoPos <= 180; servoPos += 1) {
-        myServo1.write(servoPos);
-        myServo2.write(servoPos);
-    }
-    delay(1250);
-    for (servoPos = 180; servoPos >= 0; servoPos -= 1) {
-        myServo1.write(servoPos);
-        myServo2.write(servoPos);
-    }
-    delay(1250);
+    leftServo.write(0);
+    rightServo.write(90);  
+
+    delay(1000);
+
+    leftServo.write(90);
+    rightServo.write(0);
+
+    delay(1000);
     dispenserState = COMPLETE;
 }
 
@@ -213,6 +218,7 @@ void complete() {
     // toggle the LED
     ledState = LOW;
     digitalWrite(ledPin, ledState);
+    digitalWrite(irOnPin, LOW);
     // reset the dispenser state
     dispenserState = IDLE;
 }
