@@ -31,8 +31,8 @@ const unsigned long debounceDelay = 250;  // in ms
 volatile unsigned long lastDebounceTime = 0;
 
 // stepper motor configuration
-const int stepPin = 15; 
-const int dirPin = 16; 
+const int stepPin = 16; 
+const int dirPin = 15; 
 const int enablePin = 17;                // active low
 const int microstepRes = 32;             // 1 / 32 microstep resolution
 const int stepsPerRevolution = 200;      // from datasheet: 360 deg / 1.8 deg = 200
