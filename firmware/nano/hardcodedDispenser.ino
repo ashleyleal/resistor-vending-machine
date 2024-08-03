@@ -69,8 +69,9 @@ void setup() {
 
     leftServo.attach(servoPin1);
     rightServo.attach(servoPin2);
-    leftServo.write(90);
-    rightServo.write(0);
+
+  leftServo.write(170);
+  rightServo.write(10);
 
     // stepper motor pins
     pinMode(stepPin, OUTPUT); 
@@ -197,15 +198,15 @@ void counting() {
 
 void cutting() {
     Serial.println("Cutting state");
-    leftServo.write(0);
-    rightServo.write(90);  
+  leftServo.write(10);
+  rightServo.write(170);  
 
-    delay(1000);
+  delay(2000);
 
-    leftServo.write(90);
-    rightServo.write(0);
+  leftServo.write(170);
+  rightServo.write(10);
 
-    delay(1000);
+  delay(2000);
     dispenserState = COMPLETE;
 }
 
