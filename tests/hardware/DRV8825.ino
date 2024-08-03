@@ -2,8 +2,8 @@
 // Working w/ 12V 5A Power Supply
 
 // defines pins numbers
-const int stepPin = 15; 
-const int dirPin = 16; 
+const int stepPin = 16; 
+const int dirPin = 15; 
 const int enablePin = 17;                // active low
 
 const int microstepRes = 32;             // 1 / 32 microstep resolution
