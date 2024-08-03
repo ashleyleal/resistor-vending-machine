@@ -185,16 +185,7 @@ void cutting() {
   delay(2000);
 
   reeling();
-
-//   leftServo.write(10);
-//   rightServo.write(170);
-
-//   delay(2000);
-
-//   leftServo.write(170);
-//   rightServo.write(10);
-
-//   delay(2000);
+  
   dispenserState = COMPLETE;
 }
 
