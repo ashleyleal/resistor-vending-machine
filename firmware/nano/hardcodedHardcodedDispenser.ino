@@ -57,14 +57,14 @@ void setup() {
   Serial.println("Setup started");
 
   // initialize pins
-  pinMode(buttonPin, INPUT_PULLUP);  // set the button pin as input with pullup resistor to prevent floating
+  pinMode(buttonPin, INPUT);  // set the button pin as input with pullup resistor to prevent floating
   pinMode(ledPin, OUTPUT);
 
   leftServo.attach(servoPin1);
   rightServo.attach(servoPin2);
 
-  leftServo.write(170);
-  rightServo.write(10);
+  leftServo.write(180);
+  rightServo.write(0);
 
   // stepper motor pins
   pinMode(stepPin, OUTPUT);
@@ -132,8 +132,8 @@ void pushButtonISR() {
       ledState = HIGH;
       digitalWrite(ledPin, ledState);
       Serial.println("Button pressed, waking up");
-
       dispenserState = REELING;
+
     } else if (dispenserState == REELING) {
       Serial.println("Button pressed, stopping reeling, starting cutting");
       dispenserState = CUTTING;
@@ -174,34 +174,20 @@ void reeling() {
 
 void cutting() {
   Serial.println("Cutting state");
-  leftServo.write(10);
-  rightServo.write(170);
+  leftServo.write(0);
+  rightServo.write(180);
 
   delay(2000);
 
-  leftServo.write(170);
-  rightServo.write(10);
+  leftServo.write(180);
+  rightServo.write(0);
 
   delay(2000);
-
-  reeling();
-
-//   leftServo.write(10);
-//   rightServo.write(170);
-
-//   delay(2000);
-
-//   leftServo.write(170);
-//   rightServo.write(10);
-
-//   delay(2000);
   dispenserState = COMPLETE;
 }
 
 void complete() {
   Serial.println("Complete state");
-  // reset the servo positions
-  servoPos = 0;
   // reset the resistor count
   resistorCount = 0;
   // toggle the LED
