@@ -22,7 +22,7 @@ const int ledPin = 9;
 // initialize variables
 volatile bool ledState = LOW;
 int resistorCount = 0;           // count of resistors dispensed
-int requestedResistorCount = 1;  // count of resistors requested, hardcoded to 1 for now
+int requestedResistorCount = 5;  // count of resistors requested, hardcoded to 5 for now
 
 // debounce prevents the push button from being spammed
 const unsigned long debounceDelay = 250;  // in ms
@@ -134,10 +134,12 @@ void pushButtonISR() {
       Serial.println("Button pressed, waking up");
       dispenserState = REELING;
 
-    } else if (dispenserState == REELING) {
-      Serial.println("Button pressed, stopping reeling, starting cutting");
-      dispenserState = CUTTING;
-    }
+    } 
+    
+    // else if (dispenserState == REELING) {
+    //   Serial.println("Button pressed, stopping reeling, starting cutting");
+    //   dispenserState = CUTTING;
+    // }
   }
 }
 
@@ -175,6 +177,8 @@ void reeling() {
 
   delay(1000);                    // One second delay
   digitalWrite(enablePin, HIGH);  // shutdown stepper driver
+
+  dispenserState = CUTTING;
 }
 
 void cutting() {
