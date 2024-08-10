@@ -34,7 +34,7 @@ const int dirPin = 15;
 const int enablePin = 17;            // active low
 const int microstepRes = 32;         // 1 / 32 microstep resolution
 const int stepsPerRevolution = 200;  // from datasheet: 360 deg / 1.8 deg = 200
-int stepsPerResistor = stepsPerRevolution * microstepRes * 0.25;
+int stepsPerResistor = stepsPerRevolution * microstepRes * 0.405;
 
 // servo motor configuration
 Servo leftServo;
@@ -157,15 +157,20 @@ void enterSleepMode() {
 
 void reeling() {
   Serial.println("Reeling state");
-  // move the motor enough for one resistor
-  digitalWrite(enablePin, LOW);
-  digitalWrite(dirPin, LOW);  // Enables the motor to move forward
 
-  for (int x = 0; x < stepsPerResistor; x++) {  // pulse stepper motor
-    digitalWrite(stepPin, HIGH);
-    delayMicroseconds(500);
-    digitalWrite(stepPin, LOW);
-    delayMicroseconds(500);
+  while (resistorCount < requestedResistorCount) {
+    // move the motor enough for one resistor
+    digitalWrite(enablePin, LOW);
+    digitalWrite(dirPin, LOW);  // Enables the motor to move forward
+
+    for (int x = 0; x < stepsPerResistor; x++) {  // pulse stepper motor for one resistor
+      digitalWrite(stepPin, HIGH);
+      delayMicroseconds(500);
+      digitalWrite(stepPin, LOW);
+      delayMicroseconds(500);
+    }
+
+    resistorCount++;
   }
 
   delay(1000);                    // One second delay

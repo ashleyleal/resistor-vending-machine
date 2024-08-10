@@ -1,15 +1,46 @@
 #include <SPI.h>
 
+// Define Slave Select (SS) Pin
+#define SS_PIN 10 // This should match the SS pin set in the master code
+#define LED_PIN 9
+
+volatile bool ledState = LOW; // LED state received from the Master
+
 void setup() {
-  pinMode(MISO, OUTPUT);        // Set MISO as OUTPUT for SPI communication
-  SPCR |= _BV(SPE);             // Enable SPI in Slave mode
-  pinMode(LED_BUILTIN, OUTPUT); // Set the built-in LED as OUTPUT
+  Serial.begin(9600);
+  Serial.println("Nano setup starting...");
+
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(MISO, OUTPUT);
+  
+  // Set MISO high by default
+  digitalWrite(MISO, HIGH);
+
+  // Initialize SPI in slave mode
+  SPCR |= _BV(SPE); // Enable SPI
+
+  // Enable SPI interrupt
+  SPCR |= _BV(SPIE); 
+
+  // Enable global interrupts
+  sei();
 }
 
 void loop() {
-  if (SPI.transfer(0x00) == HIGH) {  // If the received byte is HIGH
-    digitalWrite(LED_BUILTIN, HIGH); // Turn on the LED
-  } else {
-    digitalWrite(LED_BUILTIN, LOW);  // Turn off the LED
-  }
+  // Nothing to do here
+}
+
+ISR(SPI_STC_vect) {
+  // Read data from master
+  byte receivedData = SPDR;
+
+  // Set the state of the LED to copy the master's LED state
+  ledState = receivedData;
+
+  // Update the LED state
+  digitalWrite(LED_PIN, ledState);
+
+  // Debug message
+  Serial.print("SPI Interrupt: Received LED state: ");
+  Serial.println(ledState);
 }
