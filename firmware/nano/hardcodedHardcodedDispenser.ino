@@ -163,7 +163,7 @@ void reeling() {
   while (resistorCount < requestedResistorCount) {
     // move the motor enough for one resistor
     digitalWrite(enablePin, LOW);
-    digitalWrite(dirPin, LOW);  // Enables the motor to move forward
+    digitalWrite(dirPin, HIGH);  // Enables the motor to move forward
 
     for (int x = 0; x < stepsPerResistor; x++) {  // pulse stepper motor for one resistor
       digitalWrite(stepPin, HIGH);
@@ -184,14 +184,29 @@ void reeling() {
 void cutting() {
   Serial.println("Cutting state");
   leftServo.write(0);
+
+  delay(500);
+
   rightServo.write(180);
 
-  delay(2000);
+  delay(1000);
 
   leftServo.write(180);
   rightServo.write(0);
 
-  delay(2000);
+  delay(1000);
+
+  leftServo.write(0);
+
+  delay(500);
+
+  rightServo.write(180);
+
+  delay(1000);
+
+  leftServo.write(180);
+  rightServo.write(0);
+
   dispenserState = COMPLETE;
 }
 

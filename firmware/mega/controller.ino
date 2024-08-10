@@ -15,6 +15,7 @@ byte rowPins[ROWS] = {35, 33, 31, 29};
 byte colPins[COLS] = {27, 25, 23}; 
 
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
+String textBuffer = "";
 
 // making the keypad unspammable
 const unsigned long debounceDelay = 250; // in ms

@@ -29,3 +29,25 @@ void loop(){
     Serial.println(key);
   }
 }
+
+void textBuffer(){
+  if (key){
+    if (key == '*') { 
+      textBuffer = "";  
+      Serial.println("Buffer Cleared");
+    } else {
+      textBuffer += key;  
+      Serial.print("Buffer: ");
+      Serial.println(textBuffer);
+    }
+  }
+}
+
+
+int parseInput(){
+  int input;
+
+
+
+
+}
