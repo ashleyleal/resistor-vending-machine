@@ -79,7 +79,7 @@ void loop(){
 
             break;
         case DISPENSE_SIGNAL:
-
+            dispenseSignal();
             break;
         case COMPLETE:
 
@@ -120,7 +120,7 @@ void selectResistor() {
 
 void selectQuantity() {
     // prompt quantity (5-10)
-    
+
 
 }
 
@@ -134,11 +134,19 @@ void dispenseSignal() {
         break;
     case RESISTOR2:
         sendSignal(SS_NANO2, selectQuantity);
+        break;
     case RESISTOR3:
         sendSignal(SS_NANO3, selectQuantity);
+        break;
     case RESISTOR4:
         sendSignal(SS_NANO4, selectQuantity);
+        break;
     }
+    masterState = COMPLETE;
+}
+
+void complete() {
+    // reset selected resistor, resistor quantity, make sure no chips are selsected, 
 }
 
 void sendSignal(int ssPin, int quantity) {
