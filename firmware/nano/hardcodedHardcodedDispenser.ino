@@ -34,7 +34,7 @@ const int dirPin = 15;
 const int enablePin = 17;            // active low
 const int microstepRes = 32;         // 1 / 32 microstep resolution
 const int stepsPerRevolution = 200;  // from datasheet: 360 deg / 1.8 deg = 200
-int stepsPerResistor = stepsPerRevolution * microstepRes * 0.405;
+int stepsPerResistor = 2593;
 
 // servo motor configuration
 Servo leftServo;
@@ -183,29 +183,38 @@ void reeling() {
 
 void cutting() {
   Serial.println("Cutting state");
-  leftServo.write(0);
+  
+  leftServo.write(135);
+  delay(750);
+  rightServo.write(45);
 
-  delay(500);
+  delay(1000);
 
-  rightServo.write(180);
+  leftServo.write(180);
+  rightServo.write(0);
+
+  delay(1000);
+
+  rightServo.write(45);
+  delay(750);
+  leftServo.write(135);
 
   delay(1000);
 
   leftServo.write(180);
   rightServo.write(0);
 
-  delay(1000);
+  delay(2000);
 
   leftServo.write(0);
-
-  delay(500);
-
   rightServo.write(180);
 
-  delay(1000);
+  delay(2000);
 
   leftServo.write(180);
   rightServo.write(0);
+
+  delay(2000);
 
   dispenserState = COMPLETE;
 }
