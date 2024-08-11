@@ -185,24 +185,7 @@ void cutting() {
   Serial.println("Cutting state");
   
   leftServo.write(135);
-  delay(750);
   rightServo.write(45);
-
-  delay(1000);
-
-  leftServo.write(180);
-  rightServo.write(0);
-
-  delay(1000);
-
-  rightServo.write(45);
-  delay(750);
-  leftServo.write(135);
-
-  delay(1000);
-
-  leftServo.write(180);
-  rightServo.write(0);
 
   delay(2000);
 
