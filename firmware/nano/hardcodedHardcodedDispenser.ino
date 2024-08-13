@@ -183,11 +183,6 @@ void reeling() {
 
 void cutting() {
   Serial.println("Cutting state");
-  
-  leftServo.write(135);
-  rightServo.write(45);
-
-  delay(2000);
 
   leftServo.write(0);
   rightServo.write(180);
