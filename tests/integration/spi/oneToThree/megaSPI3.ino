@@ -6,9 +6,9 @@
 #define SS_NANO3 42
 
 // Define Button Pins
-#define BUTTON1 18
-#define BUTTON2 19
-#define BUTTON3 20
+#define BUTTON1 2
+#define BUTTON2 3
+#define BUTTON3 18
 
 volatile bool ledStateNano1 = LOW;
 volatile bool ledStateNano2 = LOW;
