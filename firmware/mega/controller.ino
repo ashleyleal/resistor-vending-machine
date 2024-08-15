@@ -27,6 +27,9 @@ LiquidCrystal_I2C lcd(0x3F, 16, 2);  // 16 chars x 2 lines display
 #define SS_NANO3 42
 #define SS_NANO4 43
 
+// TIMEOUT CONFIGURATION
+const unsigned long TIME_LIMIT = 300000; // 5 minutes in milliseconds
+
 // STATE DEFINITIONS FOR MASTER FSM
 enum MasterState {
     MS_IDLE,
@@ -34,7 +37,8 @@ enum MasterState {
     CONFIRM_SELECTION,
     SELECT_QUANTITY,
     DISPENSE_SIGNAL,
-    COMPLETE
+    COMPLETE,
+    TIMEOUT
 };
 
 MasterState masterState = MS_IDLE;  // Initial state of the master
@@ -56,6 +60,9 @@ String textBuffer = "";
 char key = '\0';  // Initialize key with '\0' (null character)
 char savedKey = '\0';  // Initialize savedKey with '\0' (null character)
 
+// TIMING VARIABLES
+unsigned long lastActionTime = 0;
+
 // FUNCTION PROTOTYPES
 void sweepLCD(String text, int row, int delayTime = 200);
 void idle();
@@ -64,6 +71,7 @@ void confirmSelection();
 void selectQuantity();
 void dispenseSignal();
 void complete();
+void timeout();
 void sendSignal(int ssPin, int quantity);
 void handleBuffer();
 bool verifyQuantity(int min, int max);
@@ -90,7 +98,11 @@ void loop() {
     key = keypad.getKey();  // Get keypress from keypad
     Serial.print("Key Pressed: ");
     Serial.println(key);  // Debugging: Print key to Serial Monitor
-    lcd.clear();  // Clear LCD display
+
+    // Check for timeout
+    if (masterState != MS_IDLE && millis() - lastActionTime > TIME_LIMIT) {
+        masterState = TIMEOUT;
+    }
 
     switch (masterState) {
         case MS_IDLE:
@@ -110,6 +122,9 @@ void loop() {
             break;
         case COMPLETE:
             complete();
+            break;
+        case TIMEOUT:
+            timeout();
             break;
     }
 }
@@ -141,6 +156,7 @@ void idle() {
     if (key == 'A' || key == 'B' || key == 'C' || key == 'D' || key == '*') {
         savedKey = key;
         masterState = SELECT_RESISTOR;
+        lastActionTime = millis();  // Reset timer
         key = '\0';  // Reset key to null character
     }
 }
@@ -165,17 +181,19 @@ void selectResistor() {
             return;
     }
     masterState = CONFIRM_SELECTION;
+    lastActionTime = millis();  // Reset timer
 }
 
 void confirmSelection() {
     sweepLCD("You selected dispenser " + String(savedKey), 0);
     sweepLCD("Press # to confirm or * to choose again", 1);
     
-    
     if (key == '#') {
         masterState = SELECT_QUANTITY;
+        lastActionTime = millis();  // Reset timer
     } else if (key == '*') {
         masterState = MS_IDLE;
+        selectedResistor = NONE;
     }
 }
 
@@ -190,6 +208,7 @@ void selectQuantity() {
     if (key == '#') {
         if (verifyQuantity(4, 10)) {
             masterState = DISPENSE_SIGNAL;
+            lastActionTime = millis();  // Reset timer
         } else {
             sweepLCD("Invalid quantity!", 0);
             delay(2000);
@@ -225,6 +244,17 @@ void complete() {
     resistorQuantity = 0; 
 }
 
+void timeout() {
+    sweepLCD("Session timed out!", 0);
+    sweepLCD("Returning to idle...", 1);
+    delay(3000);  // Show timeout message for 3 seconds
+    masterState = MS_IDLE;
+    selectedResistor = NONE;
+    resistorQuantity = 0;
+    lastActionTime = millis();  // Reset timer
+    lcd.clear();
+}
+
 void sendSignal(int ssPin, int quantity) {
     digitalWrite(ssPin, LOW);  
     SPI.transfer(quantity);  
@@ -257,6 +287,5 @@ bool verifyQuantity(int min, int max) {
 
 
 // NEED TO DO:
-// - Add max time until timeout (goes back to idle)
 // - Show text buffer on LCD (stop it from clearing)
 // - Show SPI works with LEDs on Nanos (make the LED flash the same number of times as the quantity)
