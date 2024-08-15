@@ -242,10 +242,10 @@ void handleBuffer() {
         lcd.clear();      
     } else if (isDigit(key)) {
         textBuffer += key;  
-        sweepLCD(textBuffer, 1);
-        Serial.print("Text Buffer: ");
         Serial.println(textBuffer);  // Debugging: Print buffer to Serial Monitor
     }
+
+    sweepLCD(textBuffer, 1, 200);
 }
 
 bool verifyQuantity(int min, int max) {
@@ -257,3 +257,9 @@ bool verifyQuantity(int min, int max) {
         return false;
     }
 }
+
+
+// NEED TO DO:
+// - Add max time until timeout (goes back to idle)
+// - Show text buffer on LCD (stop it from clearing)
+// - Show SPI works with LEDs on Nanos
