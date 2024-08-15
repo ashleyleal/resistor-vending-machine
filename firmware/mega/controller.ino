@@ -134,8 +134,9 @@ void sweepLCD(String text, int row, int delayTime) {
 }
 
 void idle() {
-    sweepLCD("Welcome to the IEEE Resistor Vending Machine", 0);
-    sweepLCD("Choose A-D", 1);
+    sweepLCD(" Welcome to the IEEE Resistor Vending Machine! ", 0);
+    sweepLCD("Please select a value (A-D)", 1);
+    delay(1000);
     
     if (key == 'A' || key == 'B' || key == 'C' || key == 'D' || key == '*') {
         savedKey = key;
@@ -168,7 +169,8 @@ void selectResistor() {
 
 void confirmSelection() {
     sweepLCD("You have selected dispenser " + String(savedKey), 0);
-    sweepLCD("Press '#' to confirm or '*' to choose again", 1);
+    sweepLCD("Press # to confirm or * to choose again", 1);
+    
     
     if (key == '#') {
         masterState = SELECT_QUANTITY;
@@ -180,21 +182,23 @@ void confirmSelection() {
 void selectQuantity() {
     lcd.clear();
     sweepLCD("How many resistors do you need?", 0);
-    delay(2000);
+    delay(1000);
     lcd.clear();
     sweepLCD("Enter a number between 4 and 10", 0);
-    
+    delay(1000);
+    lcd.clear();
+    sweepLCD("Then press # to continue", 0);
+    delay(1000);
+
     handleBuffer();
 
     if (key == '#') {
         if (verifyQuantity(4, 10)) {
             masterState = DISPENSE_SIGNAL;
         } else {
-            sweepLCD("Invalid quantity. Enter a number between 4 and 10", 0);
+            sweepLCD("Invalid quantity!", 0);
             delay(2000);
             textBuffer = "";  // Clear buffer after invalid entry
-            sweepLCD("How many resistors do you need?", 0);
-            sweepLCD("Enter a number between 4 and 10", 1);
         }
     }
 }
@@ -218,7 +222,7 @@ void dispenseSignal() {
 }
 
 void complete() {
-    sweepLCD("Dispensing " + String(resistorQuantity) + " resistors", 0);
+    sweepLCD("Dispensing " + String(resistorQuantity) + " resistors from dispenser " + String(savedKey), 0);
     sweepLCD("Thank you for using the IEEE Resistor Vending Machine! :D", 1);
     delay(5000);
     masterState = MS_IDLE;
