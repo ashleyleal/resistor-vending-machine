@@ -262,4 +262,4 @@ bool verifyQuantity(int min, int max) {
 // NEED TO DO:
 // - Add max time until timeout (goes back to idle)
 // - Show text buffer on LCD (stop it from clearing)
-// - Show SPI works with LEDs on Nanos
+// - Show SPI works with LEDs on Nanos (make the LED flash the same number of times as the quantity)
