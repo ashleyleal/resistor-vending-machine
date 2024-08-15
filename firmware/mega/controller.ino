@@ -168,7 +168,7 @@ void selectResistor() {
 }
 
 void confirmSelection() {
-    sweepLCD("You have selected dispenser " + String(savedKey), 0);
+    sweepLCD("You selected dispenser " + String(savedKey), 0);
     sweepLCD("Press # to confirm or * to choose again", 1);
     
     
@@ -180,13 +180,8 @@ void confirmSelection() {
 }
 
 void selectQuantity() {
-    lcd.clear();
-    sweepLCD("How many resistors do you need?", 0);
+    sweepLCD("Enter quantity between 4 and 10", 0);
     delay(1000);
-    lcd.clear();
-    sweepLCD("Enter a number between 4 and 10", 0);
-    delay(1000);
-    lcd.clear();
     sweepLCD("Then press # to continue", 0);
     delay(1000);
 
@@ -245,7 +240,9 @@ void handleBuffer() {
         Serial.println(textBuffer);  // Debugging: Print buffer to Serial Monitor
     }
 
-    sweepLCD(textBuffer, 1, 200);
+    lcd.clear();  // Optional: Clear the LCD to avoid overlap
+    lcd.setCursor(0,1);   // Set cursor to the beginning
+    lcd.print(textBuffer); // Display the buffer on the LCD
 }
 
 bool verifyQuantity(int min, int max) {
