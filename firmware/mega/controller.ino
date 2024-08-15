@@ -64,7 +64,7 @@ char savedKey = '\0';  // Initialize savedKey with '\0' (null character)
 unsigned long lastActionTime = 0;
 
 // FUNCTION PROTOTYPES
-void sweepLCD(String text, int row, int delayTime = 200);
+void sweepLCD(String text0, String text1, int delayTime = 200);
 void idle();
 void selectResistor();
 void confirmSelection();
@@ -129,28 +129,40 @@ void loop() {
     }
 }
 
-void sweepLCD(String text, int row, int delayTime) {
-    Serial.println(text);  // Debugging: Print text to Serial Monitor
-    int len = text.length();  
-    if (len <= 16) {  
-        lcd.setCursor(0, row);   
-        lcd.print(text); 
-    } else {  
-        for (int i = 0; i <= len - 16; i++) {
-            lcd.setCursor(0, row);
-            lcd.print(text.substring(i, i + 16));
-            delay(delayTime);  
-            key = keypad.getKey();  
-            if (key != '\0') {  
-                break;
-            }
+void sweepLCD(String text0, String text1, int delayTime) {
+    int len0 = text0.length();
+    int len1 = text1.length();
+    int maxLen = max(len0, len1); // Maximum length of text0 and text1
+
+    for (int i = 0; i <= maxLen - 16; i++) {
+        lcd.setCursor(0, 0);
+        if (i <= len0 - 16) {
+            lcd.print(text0.substring(i, i + 16));
+        } else if (i <= len0) {
+            lcd.print(text0.substring(len0 - 16));
+        } else {
+            lcd.print("                "); // Blank line
+        }
+
+        lcd.setCursor(0, 1);
+        if (i <= len1 - 16) {
+            lcd.print(text1.substring(i, i + 16));
+        } else if (i <= len1) {
+            lcd.print(text1.substring(len1 - 16));
+        } else {
+            lcd.print("                "); // Blank line
+        }
+
+        delay(delayTime);  
+        key = keypad.getKey();  
+        if (key != '\0') {  
+            break;
         }
     }
 }
 
 void idle() {
-    sweepLCD(" Welcome to the IEEE Resistor Vending Machine! ", 0);
-    sweepLCD("Please select a value (A-D)", 1);
+    sweepLCD(" Welcome to the IEEE Resistor Vending Machine! ", "Please select a value (A-D)");
     delay(1000);
     
     if (key == 'A' || key == 'B' || key == 'C' || key == 'D' || key == '*') {
@@ -185,8 +197,7 @@ void selectResistor() {
 }
 
 void confirmSelection() {
-    sweepLCD("You selected dispenser " + String(savedKey), 0);
-    sweepLCD("Press # to confirm or * to choose again", 1);
+    sweepLCD("You selected dispenser " + String(savedKey), "Press # to confirm or * to choose again");
     
     if (key == '#') {
         masterState = SELECT_QUANTITY;
@@ -198,9 +209,7 @@ void confirmSelection() {
 }
 
 void selectQuantity() {
-    sweepLCD("Enter quantity between 4 and 10", 0);
-    delay(1000);
-    sweepLCD("Then press # to continue", 0);
+    sweepLCD("Enter quantity between 4 and 10. Then press # to continue", textBuffer);
     delay(1000);
 
     handleBuffer();
@@ -210,7 +219,7 @@ void selectQuantity() {
             masterState = DISPENSE_SIGNAL;
             lastActionTime = millis();  // Reset timer
         } else {
-            sweepLCD("Invalid quantity!", 0);
+            sweepLCD("Invalid quantity!", "");
             delay(2000);
             textBuffer = "";  // Clear buffer after invalid entry
         }
@@ -236,8 +245,7 @@ void dispenseSignal() {
 }
 
 void complete() {
-    sweepLCD("Dispensing " + String(resistorQuantity) + " resistors from dispenser " + String(savedKey), 0);
-    sweepLCD("Thank you for using the IEEE Resistor Vending Machine! :D", 1);
+    sweepLCD("Dispensing " + String(resistorQuantity) + " resistors", "Thank you for using the IEEE Resistor Vending Machine!");
     delay(5000);
     masterState = MS_IDLE;
     selectedResistor = NONE;
@@ -245,8 +253,7 @@ void complete() {
 }
 
 void timeout() {
-    sweepLCD("Session timed out!", 0);
-    sweepLCD("Returning to idle...", 1);
+    sweepLCD("Session timed out!", "Returning to idle...");
     delay(3000);  // Show timeout message for 3 seconds
     masterState = MS_IDLE;
     selectedResistor = NONE;
@@ -284,8 +291,3 @@ bool verifyQuantity(int min, int max) {
         return false;
     }
 }
-
-
-// NEED TO DO:
-// - Show text buffer on LCD (stop it from clearing)
-// - Show SPI works with LEDs on Nanos (make the LED flash the same number of times as the quantity)
