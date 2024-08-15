@@ -135,6 +135,7 @@ void sweepLCD(String text0, String text1, int delayTime) {
     int maxLen = max(len0, len1); // Maximum length of text0 and text1
 
     for (int i = 0; i <= maxLen - 16; i++) {
+
         lcd.setCursor(0, 0);
         if (i <= len0 - 16) {
             lcd.print(text0.substring(i, i + 16));
@@ -144,13 +145,20 @@ void sweepLCD(String text0, String text1, int delayTime) {
             lcd.print("                "); // Blank line
         }
 
-        lcd.setCursor(0, 1);
-        if (i <= len1 - 16) {
-            lcd.print(text1.substring(i, i + 16));
-        } else if (i <= len1) {
-            lcd.print(text1.substring(len1 - 16));
+        if (masterState != SELECT_QUANTITY) {
+            // Normal scroll for non-quantity states
+            lcd.setCursor(0, 1);
+            if (i <= len1 - 16) {
+                lcd.print(text1.substring(i, i + 16));
+            } else if (i <= len1) {
+                lcd.print(text1.substring(len1 - 16));
+            } else {
+                lcd.print("                "); // Blank line
+            }
         } else {
-            lcd.print("                "); // Blank line
+            // In SELECT_QUANTITY state, show the buffer without scrolling
+            lcd.setCursor(0, 1);
+            lcd.print(textBuffer);  // Always show the buffer
         }
 
         delay(delayTime);  
@@ -202,6 +210,7 @@ void confirmSelection() {
     if (key == '#') {
         masterState = SELECT_QUANTITY;
         lastActionTime = millis();  // Reset timer
+        lcd.clear();
     } else if (key == '*') {
         masterState = MS_IDLE;
         selectedResistor = NONE;
@@ -209,6 +218,8 @@ void confirmSelection() {
 }
 
 void selectQuantity() {
+    lcd.setCursor(0,1);   // Set cursor to the beginning
+    lcd.print(textBuffer); // Display the buffer on the LCD
     sweepLCD("Enter quantity between 4 and 10. Then press # to continue", textBuffer);
     delay(1000);
 
@@ -222,6 +233,7 @@ void selectQuantity() {
             sweepLCD("Invalid quantity!", "");
             delay(2000);
             textBuffer = "";  // Clear buffer after invalid entry
+            lcd.clear();
         }
     }
 }
@@ -270,16 +282,11 @@ void sendSignal(int ssPin, int quantity) {
 
 void handleBuffer() {
     if (key == '*') { 
-        textBuffer = "";  
-        lcd.clear();      
+        textBuffer = "";        
     } else if (isDigit(key)) {
         textBuffer += key;  
         Serial.println(textBuffer);  // Debugging: Print buffer to Serial Monitor
     }
-
-    lcd.clear();  // Optional: Clear the LCD to avoid overlap
-    lcd.setCursor(0,1);   // Set cursor to the beginning
-    lcd.print(textBuffer); // Display the buffer on the LCD
 }
 
 bool verifyQuantity(int min, int max) {
