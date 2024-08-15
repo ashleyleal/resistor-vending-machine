@@ -48,8 +48,10 @@ void handleKey(char key) {
     textBuffer += key;  // Append the pressed key to the buffer
     Serial.print("Buffer: ");
     Serial.println(textBuffer);
+    
+    // Print the updated buffer to the LCD
+    lcd.clear();  // Optional: Clear the LCD to avoid overlap
+    lcd.setCursor(0,0);   // Set cursor to the beginning
+    lcd.print(textBuffer); // Display the buffer on the LCD
   }
-
-  lcd.setCursor(0,0);   // Set cursor to the beginning
-  lcd.print(textBuffer); // Display the buffer on the LCD
 }
