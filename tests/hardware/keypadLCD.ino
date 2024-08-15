@@ -19,36 +19,37 @@ String textBuffer = "";  // Initialize the text buffer
 
 LiquidCrystal_I2C lcd(0x3F,16,2);  // set the LCD address to 0x3F for a 16 chars and 2 line display
 
-void setup(){
+void setup() {
   Serial.begin(9600);
+
+  lcd.init();           // Initialize the LCD
+  lcd.clear();          // Clear the display
+  lcd.backlight();      // Turn on the backlight
+  lcd.setCursor(0,0);   // Set cursor to the beginning
 }
 
-void loop(){
+void loop() {
   char key = keypad.getKey(); // Read the key
-  
-  lcd.init();
-  lcd.clear();         
-  lcd.backlight();      // Make sure backlight is on
 
-  // Print if key pressed
-  if (key){
+  // Print if key is pressed
+  if (key) {
     Serial.print("Key Pressed: ");
     Serial.println(key);
     handleKey(key);  // Process the key input in the buffer
   }
-  
-  lcd.setCursor(2,0);   //Set cursor to character 2 on line 0
 }
 
 void handleKey(char key) {
   if (key == '*') { 
-    textBuffer = "";  
+    textBuffer = "";  // Clear the text buffer if '*' is pressed
+    lcd.clear();      // Clear the LCD display
     Serial.println("Buffer Cleared");
   } else {
-    textBuffer += key;  
+    textBuffer += key;  // Append the pressed key to the buffer
     Serial.print("Buffer: ");
     Serial.println(textBuffer);
   }
 
-  lcd.print(textBuffer);
+  lcd.setCursor(0,0);   // Set cursor to the beginning
+  lcd.print(textBuffer); // Display the buffer on the LCD
 }
