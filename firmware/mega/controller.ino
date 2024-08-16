@@ -281,17 +281,17 @@ void dispenseSignal() {
         case RESISTOR_B:
             sendSignal(SS_NANO2, resistorQuantity);
             // controlNanoLED(SS_NANO2, ledStateNano2);
-            updateStatusLED(GREEN);
+            updateStatusLED(BLUE);
             break;
         case RESISTOR_C:
             sendSignal(SS_NANO3, resistorQuantity);
             // controlNanoLED(SS_NANO3, ledStateNano3);
-            updateStatusLED(BLUE);
+            updateStatusLED(YELLOW);
             break;
         case RESISTOR_D:
             sendSignal(SS_NANO4, resistorQuantity);
             // controlNanoLED(SS_NANO4, ledStateNano3);
-            updateStatusLED(YELLOW);
+            updateStatusLED(GREEN);
             break;
     }
     masterState = COMPLETE;
