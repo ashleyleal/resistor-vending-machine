@@ -119,8 +119,6 @@ void setup() {
     digitalWrite(SS_NANO2, HIGH);
     digitalWrite(SS_NANO3, HIGH);
     digitalWrite(SS_NANO4, HIGH);
-
-    SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));  // Initialize SPI settings
 }
 
 void loop() {
@@ -259,6 +257,7 @@ void selectQuantity() {
 
     if (key == '#') {
         if (verifyQuantity(4, 10)) {
+            resistorQuantity = textBuffer.toInt();
             masterState = DISPENSE_SIGNAL;
             lastActionTime = millis();  // Reset timer
         } else {
@@ -323,14 +322,16 @@ void timeout() {
 }
 
 void sendSignal(int ssPin, int quantity) {
-    // this is broken (rip)
+
+    Serial.print("Sending" + String(quantity) + " to Dispenser " + String(ssPin) + "...");
     byte highByte = (quantity >> 8) & 0xFF;
     byte lowByte = quantity & 0xFF;
 
     digitalWrite(ssPin, LOW);  
+    SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
     SPI.transfer(highByte);
     SPI.transfer(lowByte);
-    delay(10); 
+    SPI.endTransaction();
     digitalWrite(ssPin, HIGH);
 }
 
