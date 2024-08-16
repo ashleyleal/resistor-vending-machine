@@ -17,6 +17,11 @@ byte colPins[COLS] = {39, 37, 35, 33};
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
+// Define RGB LED Pins
+int redPin = 13;
+int greenPin = 12;
+int bluePin = 11;
+
 // LCD CONFIGURATION
 LiquidCrystal_I2C lcd(0x3F, 16, 2);  // 16 chars x 2 lines display
 
@@ -55,6 +60,14 @@ enum SelectedResistor {
     NONE
 };
 
+enum LEDcolor {
+    RED,
+    GREEN,
+    BLUE,
+    YELLOW,
+    WHITE
+};
+
 SelectedResistor selectedResistor = NONE;
 int resistorQuantity = 0;
 
@@ -89,6 +102,13 @@ void setup() {
 
     // Initialize SPI
     SPI.begin();
+
+    //status LED
+    pinMode(redPin, OUTPUT);
+    pinMode(greenPin, OUTPUT);
+    pinMode(bluePin, OUTPUT);
+
+    updateStatusLED(WHITE);
   
     // Set SS pins as OUTPUT and set them HIGH
     pinMode(SS_NANO1, OUTPUT);
@@ -99,6 +119,8 @@ void setup() {
     digitalWrite(SS_NANO2, HIGH);
     digitalWrite(SS_NANO3, HIGH);
     digitalWrite(SS_NANO4, HIGH);
+
+    SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));  // Initialize SPI settings
 }
 
 void loop() {
@@ -183,6 +205,7 @@ void sweepLCD(String text0, String text1) {
 }
 
 void idle() {
+    updateStatusLED(WHITE);
     sweepLCD("Welcome to the IEEE Resistor Vending Machine!", "Please select a value (A-D)");
     if (key == 'A' || key == 'B' || key == 'C' || key == 'D' || key == '*') {
         savedKey = key;
@@ -253,19 +276,23 @@ void dispenseSignal() {
     switch (selectedResistor) {
         case RESISTOR_A:
             sendSignal(SS_NANO1, resistorQuantity);
-            controlNanoLED(SS_NANO1, ledStateNano1);
+            // controlNanoLED(SS_NANO1, ledStateNano1);
+            updateStatusLED(RED);
             break;
         case RESISTOR_B:
             sendSignal(SS_NANO2, resistorQuantity);
-            controlNanoLED(SS_NANO2, ledStateNano2);
+            // controlNanoLED(SS_NANO2, ledStateNano2);
+            updateStatusLED(GREEN);
             break;
         case RESISTOR_C:
             sendSignal(SS_NANO3, resistorQuantity);
-            controlNanoLED(SS_NANO3, ledStateNano3);
+            // controlNanoLED(SS_NANO3, ledStateNano3);
+            updateStatusLED(BLUE);
             break;
         case RESISTOR_D:
             sendSignal(SS_NANO4, resistorQuantity);
-            controlNanoLED(SS_NANO4, ledStateNano3);
+            // controlNanoLED(SS_NANO4, ledStateNano3);
+            updateStatusLED(YELLOW);
             break;
     }
     masterState = COMPLETE;
@@ -297,8 +324,13 @@ void timeout() {
 
 void sendSignal(int ssPin, int quantity) {
     // this is broken (rip)
+    byte highByte = (quantity >> 8) & 0xFF;
+    byte lowByte = quantity & 0xFF;
+
     digitalWrite(ssPin, LOW);  
-    SPI.transfer(quantity);  
+    SPI.transfer(highByte);
+    SPI.transfer(lowByte);
+    delay(10); 
     digitalWrite(ssPin, HIGH);
 }
 
@@ -338,4 +370,34 @@ void reset() {
     textBuffer = "";
     lcd.clear();
     lastActionTime = millis();  // Reset timer
+}
+
+void updateStatusLED(LEDcolor color) {
+    switch (color) {
+        case RED:
+            digitalWrite(redPin, HIGH);
+            digitalWrite(greenPin, LOW);
+            digitalWrite(bluePin, LOW);
+            break;
+        case GREEN:
+            digitalWrite(redPin, LOW);
+            digitalWrite(greenPin, HIGH);
+            digitalWrite(bluePin, LOW);
+            break;
+        case BLUE:
+            digitalWrite(redPin, LOW);
+            digitalWrite(greenPin, LOW);
+            digitalWrite(bluePin, HIGH);
+            break;
+        case YELLOW:
+            digitalWrite(redPin, HIGH);
+            digitalWrite(greenPin, HIGH);
+            digitalWrite(bluePin, LOW);
+            break;
+        case WHITE:
+            digitalWrite(redPin, HIGH);
+            digitalWrite(greenPin, HIGH);
+            digitalWrite(bluePin, HIGH);
+            break;
+    }
 }
