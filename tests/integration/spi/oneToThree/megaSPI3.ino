@@ -1,23 +1,28 @@
+#include <Keypad.h>
 #include <SPI.h>
+
+// Keypad Configuration
+const byte ROWS = 4;
+const byte COLS = 4;
+char keys[ROWS][COLS] = {
+  {'1','2','3','A'},
+  {'4','5','6','B'},
+  {'7','8','9','C'},
+  {'*','0','#','D'}
+};
+byte rowPins[ROWS] = {31, 29, 27, 25};
+byte colPins[COLS] = {39, 37, 35, 33};
+
+Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
 // Define Slave Select (SS) Pins for each Nano
 #define SS_NANO1 40
 #define SS_NANO2 41
 #define SS_NANO3 42
 
-// Define Button Pins
-#define BUTTON1 2
-#define BUTTON2 3
-#define BUTTON3 18
-
 volatile bool ledStateNano1 = LOW;
 volatile bool ledStateNano2 = LOW;
 volatile bool ledStateNano3 = LOW;
-
-const unsigned long debounceDelay = 250; // in ms
-volatile unsigned long lastDebounceTimeNano1 = 0;
-volatile unsigned long lastDebounceTimeNano2 = 0;
-volatile unsigned long lastDebounceTimeNano3 = 0;
 
 void setup() {
   // Initialize Serial for debugging
@@ -25,7 +30,7 @@ void setup() {
 
   // Initialize SPI
   SPI.begin();
-  
+
   // Set SS pins as OUTPUT and set them HIGH
   pinMode(SS_NANO1, OUTPUT);
   pinMode(SS_NANO2, OUTPUT);
@@ -33,60 +38,43 @@ void setup() {
   digitalWrite(SS_NANO1, HIGH);
   digitalWrite(SS_NANO2, HIGH);
   digitalWrite(SS_NANO3, HIGH);
-  
-  // Set button pins as INPUT with internal pull-up resistors
-  pinMode(BUTTON1, INPUT_PULLUP);
-  pinMode(BUTTON2, INPUT_PULLUP);
-  pinMode(BUTTON3, INPUT_PULLUP);
-  
-  // Attach interrupts to buttons
-  attachInterrupt(digitalPinToInterrupt(BUTTON1), pushButtonISR1, FALLING);
-  attachInterrupt(digitalPinToInterrupt(BUTTON2), pushButtonISR2, FALLING);
-  attachInterrupt(digitalPinToInterrupt(BUTTON3), pushButtonISR3, FALLING);
 
   Serial.println("Setup complete.");
 }
 
 void loop() {
-  // Main loop does nothing, everything handled by ISRs
-}
+  char key = keypad.getKey(); // Read the key
 
-// ISR for Button 1
-void pushButtonISR1() {
-  unsigned long currentTime = millis();
-  if (currentTime - lastDebounceTimeNano1 > debounceDelay) {
-    ledStateNano1 = !ledStateNano1;
-    controlNanoLED(SS_NANO1, ledStateNano1); // Toggle LED on Nano 1
-    lastDebounceTimeNano1 = currentTime;
-
-    Serial.print("Button 1 pressed. Sending LED state: ");
-    Serial.println(ledStateNano1 ? "ON" : "OFF");
+  if (key) {
+    Serial.print("Key Pressed: ");
+    Serial.println(key);
+    handleKey(key);  // Process the key input to control the LEDs
   }
 }
 
-// ISR for Button 2
-void pushButtonISR2() {
-  unsigned long currentTime = millis();
-  if (currentTime - lastDebounceTimeNano2 > debounceDelay) {
-    ledStateNano2 = !ledStateNano2;
-    controlNanoLED(SS_NANO2, ledStateNano2); // Toggle LED on Nano 2
-    lastDebounceTimeNano2 = currentTime;
+void handleKey(char key) {
+  switch (key) {
+    case 'A': // Toggle LED on Nano 1
+      ledStateNano1 = !ledStateNano1;
+      controlNanoLED(SS_NANO1, ledStateNano1);
+      break;
 
-    Serial.print("Button 2 pressed. Sending LED state: ");
-    Serial.println(ledStateNano2 ? "ON" : "OFF");
-  }
-}
+    case 'B': // Toggle LED on Nano 2
+      ledStateNano2 = !ledStateNano2;
+      controlNanoLED(SS_NANO2, ledStateNano2);
+      break;
 
-// ISR for Button 3
-void pushButtonISR3() {
-  unsigned long currentTime = millis();
-  if (currentTime - lastDebounceTimeNano3 > debounceDelay) {
-    ledStateNano3 = !ledStateNano3;
-    controlNanoLED(SS_NANO3, ledStateNano3); // Toggle LED on Nano 3
-    lastDebounceTimeNano3 = currentTime;
+    case 'C': // Toggle LED on Nano 3
+      ledStateNano3 = !ledStateNano3;
+      controlNanoLED(SS_NANO3, ledStateNano3);
+      break;
 
-    Serial.print("Button 3 pressed. Sending LED state: ");
-    Serial.println(ledStateNano3 ? "ON" : "OFF");
+    case '*': // Clear buffer or any other desired action
+      Serial.println("Buffer Cleared");
+      break;
+
+    default: // Handle other keys if necessary
+      break;
   }
 }
 
