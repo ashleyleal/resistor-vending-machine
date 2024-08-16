@@ -22,25 +22,25 @@ Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 #define SS_NANO3 42
 
 // Define RGB LED Pins
-int redPin = 13;    // Red RGB pin -> D13
-int greenPin = 12;  // Green RGB pin -> D12
-int bluePin = 11;   // Blue RGB pin -> D11
+int redPin = 13;
+int greenPin = 12;
+int bluePin = 11;
 
 // LCD Configuration
-LiquidCrystal_I2C lcd(0x3F, 16, 2);  // set the LCD address to 0x3F for a 16 chars and 2 line display
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 volatile bool ledStateNano1 = LOW;
 volatile bool ledStateNano2 = LOW;
 volatile bool ledStateNano3 = LOW;
 
-void setup() {
-  // Initialize Serial for debugging
-  Serial.begin(9600);
+// Buffer to store key sequence
+char keyBuffer[17];  // 16 characters + null terminator
+int bufferIndex = 0;
 
-  // Initialize SPI
+void setup() {
+  Serial.begin(9600);
   SPI.begin();
 
-  // Set SS pins as OUTPUT and set them HIGH
   pinMode(SS_NANO1, OUTPUT);
   pinMode(SS_NANO2, OUTPUT);
   pinMode(SS_NANO3, OUTPUT);
@@ -48,81 +48,109 @@ void setup() {
   digitalWrite(SS_NANO2, HIGH);
   digitalWrite(SS_NANO3, HIGH);
 
-  // Set RGB LED pins as OUTPUT
   pinMode(redPin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
 
-  // Initialize LCD
   lcd.init();
   lcd.clear();         
-  lcd.backlight();      // Make sure backlight is on
+  lcd.backlight();
   lcd.setCursor(0, 0);
   lcd.print("System Ready");
 
-  // Start with white color (all LEDs on)
   digitalWrite(redPin, HIGH);
   digitalWrite(greenPin, HIGH);
   digitalWrite(bluePin, HIGH);
   delay(500);
 
+  // Initialize key buffer
+  memset(keyBuffer, 0, sizeof(keyBuffer));
+
   Serial.println("Setup complete.");
 }
 
 void loop() {
-  char key = keypad.getKey(); // Read the key
+  char key = keypad.getKey();
 
   if (key) {
     Serial.print("Key Pressed: ");
     Serial.println(key);
-    handleKey(key);  // Process the key input to control the LEDs and update the LCD
+    handleKey(key);
+
+    // Update and display the key buffer, excluding '*'
+    if (key != '*') {
+      updateBuffer(key);
+    }
   }
 }
 
 void handleKey(char key) {
   lcd.clear();
   switch (key) {
-    case 'A': // Toggle LED on Nano 1 (RED) and flash RED on RGB
+    case 'A':
       ledStateNano1 = !ledStateNano1;
       controlNanoLED(SS_NANO1, ledStateNano1);
-      flashColor(redPin, greenPin, bluePin, HIGH, LOW, LOW);  // Flash RED
+      flashColor(redPin, greenPin, bluePin, HIGH, LOW, LOW);
       lcd.setCursor(0, 0);
       lcd.print("Nano 1");
       break;
 
-    case 'B': // Toggle LED on Nano 2 (BLUE) and flash BLUE on RGB
+    case 'B':
       ledStateNano2 = !ledStateNano2;
       controlNanoLED(SS_NANO2, ledStateNano2);
-      flashColor(redPin, greenPin, bluePin, LOW, LOW, HIGH);  // Flash BLUE
+      flashColor(redPin, greenPin, bluePin, LOW, LOW, HIGH);
       lcd.setCursor(0, 0);
       lcd.print("Nano 2");
       break;
 
-    case 'C': // Toggle LED on Nano 3 (YELLOW) and flash YELLOW on RGB
+    case 'C':
       ledStateNano3 = !ledStateNano3;
       controlNanoLED(SS_NANO3, ledStateNano3);
-      flashColor(redPin, greenPin, bluePin, HIGH, HIGH, LOW); // Flash YELLOW (Red + Green)
+      flashColor(redPin, greenPin, bluePin, HIGH, HIGH, LOW);
       lcd.setCursor(0, 0);
       lcd.print("Nano 3");
       break;
 
-    case '*': // Clear buffer or any other desired action
+    case '*':
       lcd.setCursor(0, 0);
       lcd.print("Buffer Cleared");
       Serial.println("Buffer Cleared");
+      clearBuffer();  // Clear the buffer when '*' is pressed
       break;
 
-    default: // Handle other keys if necessary
+    default:
       lcd.setCursor(0, 0);
       lcd.print("Invalid Key");
       break;
   }
 }
 
+void updateBuffer(char key) {
+  if (bufferIndex < 16) {
+    keyBuffer[bufferIndex++] = key;
+    keyBuffer[bufferIndex] = '\0';  // Null-terminate the string
+  } else {
+    // Shift the buffer left if it's full
+    for (int i = 1; i < 16; i++) {
+      keyBuffer[i-1] = keyBuffer[i];
+    }
+    keyBuffer[15] = key;
+  }
+  lcd.setCursor(0, 1);  // Set cursor to second line
+  lcd.print(keyBuffer); // Display buffer
+}
+
+void clearBuffer() {
+  memset(keyBuffer, 0, sizeof(keyBuffer)); // Clear buffer content
+  bufferIndex = 0;  // Reset index
+  lcd.setCursor(0, 1);
+  lcd.print("                "); // Clear the second line on the LCD
+}
+
 void controlNanoLED(int ssPin, int ledState) {
-  digitalWrite(ssPin, LOW);            // Select the Nano
-  SPI.transfer(ledState);              // Send LED state (HIGH or LOW)
-  digitalWrite(ssPin, HIGH);           // Deselect the Nano
+  digitalWrite(ssPin, LOW);
+  SPI.transfer(ledState);
+  digitalWrite(ssPin, HIGH);
 
   Serial.print("Control LED on Nano with SS Pin ");
   Serial.print(ssPin);
@@ -131,7 +159,6 @@ void controlNanoLED(int ssPin, int ledState) {
 }
 
 void flashColor(int redPin, int greenPin, int bluePin, int redState, int greenState, int blueState) {
-  // Set the RGB LED to the specified color
   digitalWrite(redPin, redState);
   digitalWrite(greenPin, greenState);
   digitalWrite(bluePin, blueState);
