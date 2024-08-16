@@ -291,6 +291,8 @@ void sendSignal(int ssPin, int quantity) {
 void handleBuffer() {
     if (key == '*') { 
         textBuffer = "";        
+        lcd.clear();
+        Serial.println("Buffer Cleared");
     } else if (isDigit(key)) {
         textBuffer += key;  
         Serial.println(textBuffer);  // Debugging: Print buffer to Serial Monitor
