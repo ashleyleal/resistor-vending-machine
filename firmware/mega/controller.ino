@@ -270,6 +270,7 @@ void complete() {
     masterState = MS_IDLE;
     selectedResistor = NONE;
     resistorQuantity = 0; 
+    textBuffer = "";  // Clear buffer after successful dispensing
 }
 
 void timeout() {
@@ -278,6 +279,7 @@ void timeout() {
     masterState = MS_IDLE;
     selectedResistor = NONE;
     resistorQuantity = 0;
+    textBuffer = "";  // Clear buffer after timeout
     lastActionTime = millis();  // Reset timer
     lcd.clear();
 }
