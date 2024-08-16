@@ -134,9 +134,6 @@ void loop() {
             timeout();
             break;
     }
-    
-    // Update LCD display
-    sweepLCD(" ", " ");  // Pass empty strings to avoid blocking
 }
 
 void sweepLCD(String text0, String text1) {
@@ -265,6 +262,7 @@ void dispenseSignal() {
 }
 
 void complete() {
+    // since sweepLCD is now non-blocking, it never gets printed because of the delay
     sweepLCD("Dispensing " + String(resistorQuantity) + " resistors", "Thank you for using the IEEE Resistor Vending Machine!");
     delay(5000);
     masterState = MS_IDLE;
@@ -274,6 +272,7 @@ void complete() {
 }
 
 void timeout() {
+    // since sweepLCD is now non-blocking, it never gets printed because of the delay
     sweepLCD("Session timed out!", "Restarting...");
     delay(3000);  // Show timeout message for 3 seconds
     masterState = MS_IDLE;
