@@ -26,6 +26,10 @@ LiquidCrystal_I2C lcd(0x3F, 16, 2);  // 16 chars x 2 lines display
 #define SS_NANO3 42
 #define SS_NANO4 43
 
+volatile bool ledStateNano1 = LOW;
+volatile bool ledStateNano2 = LOW;
+volatile bool ledStateNano3 = LOW;
+
 // TIMEOUT CONFIGURATION
 const unsigned long TIME_LIMIT = 300000; // 5 minutes in milliseconds
 
@@ -249,15 +253,19 @@ void dispenseSignal() {
     switch (selectedResistor) {
         case RESISTOR_A:
             sendSignal(SS_NANO1, resistorQuantity);
+            controlNanoLED(SS_NANO1, ledStateNano1);
             break;
         case RESISTOR_B:
             sendSignal(SS_NANO2, resistorQuantity);
+            controlNanoLED(SS_NANO2, ledStateNano2);
             break;
         case RESISTOR_C:
             sendSignal(SS_NANO3, resistorQuantity);
+            controlNanoLED(SS_NANO3, ledStateNano3);
             break;
         case RESISTOR_D:
             sendSignal(SS_NANO4, resistorQuantity);
+            controlNanoLED(SS_NANO4, ledStateNano3);
             break;
     }
     masterState = COMPLETE;
@@ -288,9 +296,22 @@ void timeout() {
 }
 
 void sendSignal(int ssPin, int quantity) {
+    // this is broken (rip)
     digitalWrite(ssPin, LOW);  
     SPI.transfer(quantity);  
     digitalWrite(ssPin, HIGH);
+}
+
+void controlNanoLED(int ssPin, int ledState) {
+  ledState = !ledState;  // Toggle the LED state
+  digitalWrite(ssPin, LOW);
+  SPI.transfer(ledState);
+  digitalWrite(ssPin, HIGH);
+
+  Serial.print("Control LED on Nano with SS Pin ");
+  Serial.print(ssPin);
+  Serial.print(". LED state set to: ");
+  Serial.println(ledState ? "ON" : "OFF");
 }
 
 void handleBuffer() {
