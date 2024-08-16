@@ -1,5 +1,7 @@
 #include <SPI.h>
 
+// Use this with controller.ino to test if the Nano can receive the correct quantity from the controller
+
 // Define Slave Select (SS) Pin
 #define SS_PIN 10  // This should match the SS pin set in the master code
 #define LED_PIN 9
