@@ -235,7 +235,9 @@ void selectQuantity() {
             masterState = DISPENSE_SIGNAL;
             lastActionTime = millis();  // Reset timer
         } else {
-            sweepLCD("Invalid quantity!", "");
+            lcd.clear();
+            lcd.setCursor(0, 0);
+            lcd.print("Invalid quantity!");
             delay(2000);
             textBuffer = "";  // Clear buffer after invalid entry
             lcd.clear();
@@ -262,9 +264,14 @@ void dispenseSignal() {
 }
 
 void complete() {
-    // since sweepLCD is now non-blocking, it never gets printed because of the delay
-    sweepLCD("Dispensing " + String(resistorQuantity) + " resistors", "Thank you for using the IEEE Resistor Vending Machine!");
-    delay(5000);
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Dispensing...");   
+    delay(7000);
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Thank you! :D");
+    delay(2000);
     masterState = MS_IDLE;
     selectedResistor = NONE;
     resistorQuantity = 0; 
@@ -272,8 +279,13 @@ void complete() {
 }
 
 void timeout() {
-    // since sweepLCD is now non-blocking, it never gets printed because of the delay
-    sweepLCD("Session timed out!", "Restarting...");
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Timeout!");   
+    delay(2000);
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Restarting...");   
     delay(3000);  // Show timeout message for 3 seconds
     masterState = MS_IDLE;
     selectedResistor = NONE;
