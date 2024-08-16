@@ -272,10 +272,7 @@ void complete() {
     lcd.setCursor(0, 0);
     lcd.print("Thank you! :D");
     delay(2000);
-    masterState = MS_IDLE;
-    selectedResistor = NONE;
-    resistorQuantity = 0; 
-    textBuffer = "";  // Clear buffer after successful dispensing
+    reset();
 }
 
 void timeout() {
@@ -287,12 +284,7 @@ void timeout() {
     lcd.setCursor(0, 0);
     lcd.print("Restarting...");   
     delay(3000);  // Show timeout message for 3 seconds
-    masterState = MS_IDLE;
-    selectedResistor = NONE;
-    resistorQuantity = 0;
-    textBuffer = "";  // Clear buffer after timeout
-    lastActionTime = millis();  // Reset timer
-    lcd.clear();
+    reset();
 }
 
 void sendSignal(int ssPin, int quantity) {
@@ -315,4 +307,14 @@ void handleBuffer() {
 bool verifyQuantity(int min, int max) {
     int quantity = textBuffer.toInt();
     return (quantity >= min && quantity <= max);
+}
+
+
+void reset() {
+    masterState = MS_IDLE;
+    selectedResistor = NONE;
+    resistorQuantity = 0;
+    textBuffer = "";
+    lcd.clear();
+    lastActionTime = millis();  // Reset timer
 }
