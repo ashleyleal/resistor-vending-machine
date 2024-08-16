@@ -3,17 +3,18 @@
 #include <LiquidCrystal_I2C.h>
 
 // KEYPAD CONFIGURATION
-const byte ROWS = 4; 
-const byte COLS = 4; 
+const byte ROWS = 4;
+const byte COLS = 4;
 
 char keys[ROWS][COLS] = {
-  {'1','2','3', 'A'},
-  {'4','5','6', 'B'},
-  {'7','8','9', 'C'},
-  {'*','0','#', 'D'}
+    {'1', '2', '3', 'A'},
+    {'4', '5', '6', 'B'},
+    {'7', '8', '9', 'C'},
+    {'*', '0', '#', 'D'}
 };
-byte rowPins[ROWS] = {37, 35, 33, 31}; 
-byte colPins[COLS] = {29, 27, 25, 23}; 
+
+byte rowPins[ROWS] = {37, 35, 33, 31};
+byte colPins[COLS] = {29, 27, 25, 23};
 
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
@@ -61,9 +62,11 @@ char savedKey = '\0';  // Initialize savedKey with '\0' (null character)
 
 // TIMING VARIABLES
 unsigned long lastActionTime = 0;
+unsigned long previousMillis = 0; // Store the last time the display was updated
+const int interval = 300; // Interval for updating the display (in milliseconds)
 
 // FUNCTION PROTOTYPES
-void sweepLCD(String text0, String text1, int delayTime = 200);
+void sweepLCD(String text0, String text1);
 void idle();
 void selectResistor();
 void confirmSelection();
@@ -80,9 +83,11 @@ void setup() {
     lcd.init();           
     lcd.clear();          
     lcd.backlight();      
-    lcd.setCursor(0, 0);
 
+    // Initialize SPI
     SPI.begin();
+  
+    // Set SS pins as OUTPUT and set them HIGH
     pinMode(SS_NANO1, OUTPUT);
     pinMode(SS_NANO2, OUTPUT);
     pinMode(SS_NANO3, OUTPUT);
@@ -126,14 +131,22 @@ void loop() {
             timeout();
             break;
     }
+    
+    // Update LCD display
+    sweepLCD(" ", " ");  // Pass empty strings to avoid blocking
 }
 
-void sweepLCD(String text0, String text1, int delayTime) {
+void sweepLCD(String text0, String text1) {
+    static int i = 0; // Current position in the scrolling text
     int len0 = text0.length();
     int len1 = text1.length();
     int maxLen = max(len0, len1); // Maximum length of text0 and text1
 
-    for (int i = 0; i <= maxLen - 16; i++) {
+    unsigned long currentMillis = millis();
+
+    // Check if it's time to update the display
+    if (currentMillis - previousMillis >= interval) {
+        previousMillis = currentMillis; // Save the last update time
 
         lcd.setCursor(0, 0);
         if (i <= len0 - 16) {
@@ -144,9 +157,8 @@ void sweepLCD(String text0, String text1, int delayTime) {
             lcd.print("                "); // Blank line
         }
 
+        lcd.setCursor(0, 1);
         if (masterState != SELECT_QUANTITY) {
-            // Normal scroll for non-quantity states
-            lcd.setCursor(0, 1);
             if (i <= len1 - 16) {
                 lcd.print(text1.substring(i, i + 16));
             } else if (i <= len1) {
@@ -155,23 +167,19 @@ void sweepLCD(String text0, String text1, int delayTime) {
                 lcd.print("                "); // Blank line
             }
         } else {
-            // In SELECT_QUANTITY state, show the buffer without scrolling
-            lcd.setCursor(0, 1);
             lcd.print(textBuffer);  // Always show the buffer
         }
 
-        delay(delayTime);  
-        key = keypad.getKey();  
-        if (key != '\0') {  
-            break;
+        // Increment the position and reset if it goes beyond the text length
+        i++;
+        if (i > maxLen - 16) {
+            i = 0;
         }
     }
 }
 
 void idle() {
-    sweepLCD(" Welcome to the IEEE Resistor Vending Machine! ", "Please select a value (A-D)");
-    delay(1000);
-    
+    sweepLCD("Welcome to the IEEE Resistor Vending Machine!", "Please select a value (A-D)");
     if (key == 'A' || key == 'B' || key == 'C' || key == 'D' || key == '*') {
         savedKey = key;
         masterState = SELECT_RESISTOR;
@@ -205,7 +213,6 @@ void selectResistor() {
 
 void confirmSelection() {
     sweepLCD("You selected dispenser " + String(savedKey), "Press # to confirm or * to choose again");
-    
     if (key == '#') {
         masterState = SELECT_QUANTITY;
         lastActionTime = millis();  // Reset timer
@@ -220,7 +227,6 @@ void selectQuantity() {
     lcd.setCursor(0,1);   // Set cursor to the beginning
     lcd.print(textBuffer); // Display the buffer on the LCD
     sweepLCD("Enter quantity between 4 and 10. Then press # to continue", textBuffer);
-    delay(1000);
 
     handleBuffer();
 
@@ -264,7 +270,7 @@ void complete() {
 }
 
 void timeout() {
-    sweepLCD("Session timed out!", "Returning to idle...");
+    sweepLCD("Session timed out!", "Restarting...");
     delay(3000);  // Show timeout message for 3 seconds
     masterState = MS_IDLE;
     selectedResistor = NONE;
@@ -290,10 +296,5 @@ void handleBuffer() {
 
 bool verifyQuantity(int min, int max) {
     int quantity = textBuffer.toInt();
-    if (quantity >= min && quantity <= max) {
-        resistorQuantity = quantity;
-        return true;
-    } else {
-        return false;
-    }
+    return (quantity >= min && quantity <= max);
 }

@@ -92,7 +92,7 @@ void handleKey(char key) {
       controlNanoLED(SS_NANO1, ledStateNano1);
       flashColor(redPin, greenPin, bluePin, HIGH, LOW, LOW);
       lcd.setCursor(0, 0);
-      lcd.print("Nano 1");
+      lcd.print("Controlling Nano 1");
       break;
 
     case 'B':
@@ -100,7 +100,7 @@ void handleKey(char key) {
       controlNanoLED(SS_NANO2, ledStateNano2);
       flashColor(redPin, greenPin, bluePin, LOW, LOW, HIGH);
       lcd.setCursor(0, 0);
-      lcd.print("Nano 2");
+      lcd.print("Controlling Nano 2");
       break;
 
     case 'C':
@@ -108,7 +108,7 @@ void handleKey(char key) {
       controlNanoLED(SS_NANO3, ledStateNano3);
       flashColor(redPin, greenPin, bluePin, HIGH, HIGH, LOW);
       lcd.setCursor(0, 0);
-      lcd.print("Nano 3");
+      lcd.print("Controlling Nano 3");
       break;
 
     case '*':
