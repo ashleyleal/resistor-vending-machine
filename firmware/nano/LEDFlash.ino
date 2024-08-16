@@ -36,7 +36,7 @@ void setup() {
 }
 
 void loop() {
-  if (newQuantityReceived) {
+  if (newQuantityReceived && receivedQuantity < 10 && receivedQuantity > 0) {
     flashLED(receivedQuantity);
     newQuantityReceived = false; // Reset the flag
   }
