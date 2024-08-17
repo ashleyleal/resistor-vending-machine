@@ -12,6 +12,7 @@
 #include <Stepper.h>
 #include <avr/sleep.h>
 #include <avr/interrupt.h>
+#include <SPI.h>
 
 // define pins
 const int buttonPin = 3;
@@ -19,10 +20,16 @@ const int servoPin1 = 5;
 const int servoPin2 = 6;
 const int ledPin = 9;
 
+#define SS_PIN 10  // This should match the SS pin set in the master code
+
 // initialize variables
 volatile bool ledState = LOW;
 int resistorCount = 0;           // count of resistors dispensed
 int requestedResistorCount = 5;  // count of resistors requested, hardcoded to 5 for now
+
+// spi
+volatile int receivedQuantity = 0; // Integer quantity received from the Master
+volatile bool newQuantityReceived = false; // Flag to indicate a new quantity has been received
 
 // debounce prevents the push button from being spammed
 const unsigned long debounceDelay = 250;  // in ms
@@ -75,7 +82,25 @@ void setup() {
   // calling ISR on negedge of button press
   attachInterrupt(digitalPinToInterrupt(buttonPin), pushButtonISR, FALLING);
 
-  // enable global interrupts
+  // SPI configuration
+  pinMode(MISO, OUTPUT); // Set MISO pin as output
+  
+  // Set MISO high by default
+  digitalWrite(MISO, HIGH);
+
+  // Initialize SPI in slave mode
+  SPI.begin();  // Initialize SPI peripheral
+
+  // Set SPI Slave select pin as input
+  pinMode(SS_PIN, INPUT);
+  
+  // Enable SPI in Slave mode
+  SPCR |= _BV(SPE);  // Enable SPI in Slave mode
+
+  // Enable SPI interrupt
+  SPCR |= _BV(SPIE);
+
+  // Enable global interrupts
   sei();
   Serial.println("Setup complete");
 }
@@ -88,11 +113,12 @@ The FSM transitions from one state to another based on inputs or events, and it 
 */
 
 void loop() {
+
   switch (dispenserState) {
     case IDLE:
-      Serial.println("Entering sleep mode");
-      delay(100);
-      enterSleepMode();
+      // Serial.println("Entering sleep mode");
+      // delay(100);
+      // enterSleepMode();
       break;
     case REELING:
       reeling();
@@ -140,6 +166,38 @@ void pushButtonISR() {
     //   Serial.println("Button pressed, stopping reeling, starting cutting");
     //   dispenserState = CUTTING;
     // }
+  }
+}
+
+ISR(SPI_STC_vect) {
+  static byte highByte = 0;
+  static byte lowByte = 0;
+  static byte byteCount = 0;
+
+  byte receivedData = SPDR;
+
+  // Handle data reception
+  if (byteCount == 0) {
+    highByte = receivedData;
+    byteCount++;
+  } else if (byteCount == 1) {
+    lowByte = receivedData;
+    byteCount = 0;
+
+    // Combine highByte and lowByte to reconstruct the integer
+    receivedQuantity = (highByte << 8) | lowByte;
+    newQuantityReceived = true;
+
+    // Debug message
+    Serial.print("SPI Interrupt: Received quantity: ");
+    Serial.println(receivedQuantity);
+  }
+
+    if (receivedQuantity < 10 && receivedQuantity > 0 && dispenserState == IDLE) {
+    flashLED(receivedQuantity);
+    requestedResistorCount = receivedQuantity;
+    dispenserState = REELING;
+    newQuantityReceived = false; // Reset the flag
   }
 }
 
@@ -206,4 +264,13 @@ void complete() {
   digitalWrite(ledPin, ledState);
   // reset the dispenser state
   dispenserState = IDLE;
+}
+
+void flashLED(int quantity) {
+  for (int i = 0; i < quantity; i++) {
+    digitalWrite(ledPin, HIGH);
+    delay(500); // LED on for 500 milliseconds
+    digitalWrite(ledPin, LOW);
+    delay(500); // LED off for 500 milliseconds
+  }
 }
