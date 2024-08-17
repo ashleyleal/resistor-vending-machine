@@ -1,9 +1,23 @@
+/*
+ * Project Name: Resistor Vending Machine
+ * Author      : Ashley Leal
+ * Date        : 08/17/2024
+ *
+ * File Name   : hardcodedDispenser.ino
+ * Purpose     : This file contains the code for the master controller (Arduino Mega) of the IEEE Resistor Vending Machine.
+ *               The master controller is responsible for handling user input, displaying information on the LCD, and sending 
+ *               signals to the slave controllers (Arduino Nanos) to dispense resistors.
+ *
+ */
+
+// This file may be used with dispenser.ino (main dispenser code) or LEDFlash.ino to test the SPI communication 
+// between the master and slave controllers.
+
 #include <Keypad.h>
 #include <SPI.h>
 #include <LiquidCrystal_I2C.h>
 
-// KEYPAD CONFIGURATION
-
+/* KEYPAD CONFIG */
 const byte ROWS = 4;
 const byte COLS = 4;
 char keys[ROWS][COLS] = {
@@ -14,31 +28,33 @@ char keys[ROWS][COLS] = {
 };
 byte rowPins[ROWS] = {31, 29, 27, 25};
 byte colPins[COLS] = {39, 37, 35, 33};
-
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
-// Define RGB LED Pins
+/* STATUS LED */
 int redPin = 13;
 int greenPin = 12;
 int bluePin = 11;
 
-// LCD CONFIGURATION
+/* LCD CONFIG */
 LiquidCrystal_I2C lcd(0x3F, 16, 2);  // 16 chars x 2 lines display
 
-// SPI CONFIGURATION - Define Slave Select (SS) Pins for each Nano
+/* SPI CONFIG (SS) */
 #define SS_NANO1 40
 #define SS_NANO2 41
 #define SS_NANO3 42
 #define SS_NANO4 43
 
+/* LED STATES */
+// (for testing SPI signal)
 volatile bool ledStateNano1 = LOW;
 volatile bool ledStateNano2 = LOW;
 volatile bool ledStateNano3 = LOW;
+volatile bool ledStateNano4 = LOW;
 
-// TIMEOUT CONFIGURATION
+/* TIMEOUT CONFIG */
 const unsigned long TIME_LIMIT = 300000; // 5 minutes in milliseconds
 
-// STATE DEFINITIONS FOR MASTER FSM
+/* STATE DEFINITIONS FOR MASTER FSM */
 enum MasterState {
     MS_IDLE,
     SELECT_RESISTOR,
@@ -48,10 +64,9 @@ enum MasterState {
     COMPLETE,
     TIMEOUT
 };
-
 MasterState masterState = MS_IDLE;  // Initial state of the master
 
-// ENUM FOR SELECTED RESISTOR
+/* ENUM FOR SELECTED RESISTOR */
 enum SelectedResistor {
     RESISTOR_A,
     RESISTOR_B,
@@ -60,6 +75,9 @@ enum SelectedResistor {
     NONE
 };
 
+SelectedResistor selectedResistor = NONE; // Initial state of the selected resistor
+
+/* ENUM FOR LED COLORS */
 enum LEDcolor {
     RED,
     GREEN,
@@ -68,20 +86,19 @@ enum LEDcolor {
     WHITE
 };
 
-SelectedResistor selectedResistor = NONE;
-int resistorQuantity = 0;
+int resistorQuantity = 0; // Store the quantity of resistors to dispense
 
-// BUFFER VARIABLES
+/* GLOBAL VARIABLES */
 String textBuffer = "";
 char key = '\0';  // Initialize key with '\0' (null character)
 char savedKey = '\0';  // Initialize savedKey with '\0' (null character)
 
-// TIMING VARIABLES
+/* TIMING CONFIG */
 unsigned long lastActionTime = 0;
 unsigned long previousMillis = 0; // Store the last time the display was updated
 const int interval = 300; // Interval for updating the display (in milliseconds)
 
-// FUNCTION PROTOTYPES
+/* FUNCTION PROTOTYPES */
 void sweepLCD(String text0, String text1);
 void idle();
 void selectResistor();
@@ -91,8 +108,11 @@ void dispenseSignal();
 void complete();
 void timeout();
 void sendSignal(int ssPin, int quantity);
+void controlNanoLED(int ssPin, int ledState);  
 void handleBuffer();
 bool verifyQuantity(int min, int max);
+void reset();
+void updateStatusLED(LEDcolor color);
 
 void setup() {
     Serial.begin(9600);
@@ -162,13 +182,14 @@ void loop() {
 
 void sweepLCD(String text0, String text1) {
     static int i = 0; // Current position in the scrolling text
-    int len0 = text0.length();
+    int len0 = text0.length(); 
     int len1 = text1.length();
     int maxLen = max(len0, len1); // Maximum length of text0 and text1
 
-    unsigned long currentMillis = millis();
+    unsigned long currentMillis = millis(); // Get the current time
 
-    // Check if it's time to update the display
+    // Implement based on timing instead of delays to allow for non-blocking behavior
+    // Check if it's time to update the display (every interval milliseconds)
     if (currentMillis - previousMillis >= interval) {
         previousMillis = currentMillis; // Save the last update time
 
@@ -182,6 +203,7 @@ void sweepLCD(String text0, String text1) {
         }
 
         lcd.setCursor(0, 1);
+        // When in SELECT_QUANTITY state, always show the buffer
         if (masterState != SELECT_QUANTITY) {
             if (i <= len1 - 16) {
                 lcd.print(text1.substring(i, i + 16));
@@ -229,7 +251,7 @@ void selectResistor() {
             break;
         case '*':
             masterState = MS_IDLE;
-            selectedResistor = NONE;
+            reset();
             return;
     }
     masterState = CONFIRM_SELECTION;
@@ -244,7 +266,7 @@ void confirmSelection() {
         lcd.clear();
     } else if (key == '*') {
         masterState = MS_IDLE;
-        selectedResistor = NONE;
+        reset();
     }
 }
 
@@ -253,7 +275,7 @@ void selectQuantity() {
     lcd.print(textBuffer); // Display the buffer on the LCD
     sweepLCD("Enter quantity between 4 and 10. Then press # to continue", textBuffer);
 
-    handleBuffer();
+    handleBuffer(); // Handle the buffer based on keypress (add to buffer or clear)
 
     if (key == '#') {
         if (verifyQuantity(4, 10)) {
@@ -290,7 +312,7 @@ void dispenseSignal() {
             break;
         case RESISTOR_D:
             sendSignal(SS_NANO4, resistorQuantity);
-            // controlNanoLED(SS_NANO4, ledStateNano3);
+            // controlNanoLED(SS_NANO4, ledStateNano4);
             updateStatusLED(GREEN);
             break;
     }
@@ -322,16 +344,20 @@ void timeout() {
 }
 
 void sendSignal(int ssPin, int quantity) {
-
     Serial.print("Sending" + String(quantity) + " to Dispenser " + String(ssPin) + "...");
+    // Cannot just send the quantity as integer, must split into two bytes
     byte highByte = (quantity >> 8) & 0xFF;
     byte lowByte = quantity & 0xFF;
 
-    digitalWrite(ssPin, LOW);  
+    digitalWrite(ssPin, LOW); // Select the dispenser
+
+    // Send the two bytes over SPI
     SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));
     SPI.transfer(highByte);
     SPI.transfer(lowByte);
     SPI.endTransaction();
+
+    // Deselect the dispenser
     digitalWrite(ssPin, HIGH);
 }
 
@@ -348,13 +374,13 @@ void controlNanoLED(int ssPin, int ledState) {
 }
 
 void handleBuffer() {
-    if (key == '*') { 
+    if (key == '*') { // Clear the buffer when '*' is pressed
         textBuffer = "";        
         lcd.clear();
         Serial.println("Buffer Cleared");
     } else if (isDigit(key)) {
         textBuffer += key;  
-        Serial.println(textBuffer);  // Debugging: Print buffer to Serial Monitor
+        Serial.println(textBuffer);  
     }
 }
 
@@ -365,6 +391,7 @@ bool verifyQuantity(int min, int max) {
 
 
 void reset() {
+    // Reset all variables
     masterState = MS_IDLE;
     selectedResistor = NONE;
     resistorQuantity = 0;
