@@ -1,10 +1,10 @@
 /*
  * Project Name: Resistor Vending Machine
  * Author      : Ashley Leal
- * Date        : 07/11/2024
+ * Date        : 08/17/2024
  *
- * File Name   : hardcodedDispenser.ino
- * Purpose     :
+ * File Name   : dispenser.ino
+ * Purpose     : Dispenser firmware for the Resistor Vending Machine project. Loaded onto the Arduino Nano.
  *
  */
 
@@ -14,28 +14,25 @@
 #include <avr/interrupt.h>
 #include <SPI.h>
 
-// define pins
-const int buttonPin = 3;
-const int servoPin1 = 5;
-const int servoPin2 = 6;
+/* STATUS LED */
+volatile bool ledState = LOW;
 const int ledPin = 9;
 
-#define SS_PIN 10  // This should match the SS pin set in the master code
-
-// initialize variables
-volatile bool ledState = LOW;
+/* RESISTOR STATES */
 int resistorCount = 0;           // count of resistors dispensed
 int requestedResistorCount = 5;  // count of resistors requested, hardcoded to 5 for now
 
-// spi
+/* SPI COMMUNICATION */
+#define SS_PIN 10  
 volatile int receivedQuantity = 0; // Integer quantity received from the Master
 volatile bool newQuantityReceived = false; // Flag to indicate a new quantity has been received
 
-// debounce prevents the push button from being spammed
+/* BUTTON DEBOUNCE CONFIG */
+const int buttonPin = 3;
 const unsigned long debounceDelay = 250;  // in ms
 volatile unsigned long lastDebounceTime = 0;
 
-// stepper motor configuration
+/* STEPPER MOTOR CONFIG */
 const int stepPin = 16;
 const int dirPin = 15;
 const int enablePin = 17;            // active low
@@ -43,12 +40,14 @@ const int microstepRes = 32;         // 1 / 32 microstep resolution
 const int stepsPerRevolution = 200;  // from datasheet: 360 deg / 1.8 deg = 200
 int stepsPerResistor = 2593;
 
-// servo motor configuration
+/* SERVO MOTOR CONFIG */
+const int servoPin1 = 5;
+const int servoPin2 = 6;
 Servo leftServo;
 Servo rightServo;
 int servoPos = 0;
 
-// define states for the dispenser FSM
+/* STATE DEFINITIONS FOR THE DISPENSER FSM */
 enum DispenserState {
   IDLE,
   REELING,

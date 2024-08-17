@@ -3,7 +3,7 @@
  * Author      : Ashley Leal
  * Date        : 08/17/2024
  *
- * File Name   : hardcodedDispenser.ino
+ * File Name   : controller.ino
  * Purpose     : This file contains the code for the master controller (Arduino Mega) of the IEEE Resistor Vending Machine.
  *               The master controller is responsible for handling user input, displaying information on the LCD, and sending 
  *               signals to the slave controllers (Arduino Nanos) to dispense resistors.
